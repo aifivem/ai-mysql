@@ -16,7 +16,6 @@ dependencies {
 
 files {
 	'locales/*.json',
-	'dist/*.json',
 }
 provide 'oxmysql'
 provide 'mysql-async'
