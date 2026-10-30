@@ -4,6 +4,56 @@ var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).expor
 
 let node_perf_hooks = require("node:perf_hooks");
 
+// ../../../packages/shared/src/core.ts
+/** Names owned by ai-core that other resources, the bridges and the build step use. */
+const CORE = {
+	resource: "ai-core",
+	/** Client -> server: (resource: string, text: string). Sent by the reporter every client bundle carries. */
+	clientErrorEvent: "ai-core:clientError",
+	/** (src, character: CharacterInfo) after a character is loaded and spawned. */
+	playerLoadedEvent: "ai-core:playerLoaded",
+	/** (src, charId, reason: UnloadReason) before a character's state is dropped. */
+	playerUnloadedEvent: "ai-core:playerUnloaded",
+	/** (src, account: string, balance: number, delta: number, reason: string) */
+	moneyChangedEvent: "ai-core:moneyChanged",
+	/** (src, jobs: JobMembership[]) */
+	jobsChangedEvent: "ai-core:jobsChanged",
+	/** (src, job: string | null) */
+	dutyChangedEvent: "ai-core:dutyChanged",
+	/** (src, gangs: GangMembership[]) */
+	gangsChangedEvent: "ai-core:gangsChanged",
+	/** (src, gang: string | null) */
+	activeGangChangedEvent: "ai-core:activeGangChanged",
+	/** (src, charIds: number[]) each time a player's character screen loads; an appearance resource answers with portraits. */
+	characterScreenEvent: "ai-core:characterScreen",
+	/** (resource: string | null) the inventory behind ai-core's inventory layer changed (the bridge drops its item cache). */
+	inventoryChangedEvent: "ai-core:inventoryChanged",
+	/** (src, name: string, status: Record<string, number> | null) a player used an item; status = the needs it gives, from inventories that define them. */
+	itemUsedEvent: "ai-core:itemUsed",
+	/** (src, killer: number | null, weaponHash: number) a player with a loaded character died; fired from FXServer's `onPedDeath` (needs `PED_DEATH_STATE_KEY`). */
+	playerDiedEvent: "ai-core:playerDied",
+	clientPlayerLoadedEvent: "ai-core:client:playerLoaded",
+	clientPlayerUnloadedEvent: "ai-core:client:playerUnloaded",
+	/** (charId: number, url: string) a portrait image of a character on the character screen (e.g. `https://nui-img/<txd>/<txd>`). */
+	clientCharacterPortraitEvent: "ai-core:client:characterPortrait",
+	/** (charId: number) ai-appearance holds this character's look: ai-core dresses its scene ped with `ApplyCharacterAppearance`. */
+	clientCharacterLookEvent: "ai-core:client:characterLook",
+	/** (resource: string, id: string) the interaction key was pressed while that resource's prompt was on top. */
+	clientPromptPressedEvent: "ai-core:client:promptPressed",
+	/** (key: keyof PlayerCache, value) a cached value of the local player changed (one watcher in ai-core for every resource). */
+	clientCacheEvent: "ai-core:client:cache",
+	charactersCallback: "ai-core:characters",
+	createCharacterCallback: "ai-core:createCharacter",
+	deleteCharacterCallback: "ai-core:deleteCharacter",
+	selectCharacterCallback: "ai-core:selectCharacter",
+	/** Server -> client: (notification: Notification) a notification card on the player's screen. */
+	clientNotifyEvent: "ai-core:client:notify",
+	/** Server -> client: (spawn: SpawnPoint) puts the loaded character into the world. */
+	spawnEvent: "ai-core:client:spawn",
+	/** Server -> client: () the character was let go (switch); show the character screen again. */
+	openCharactersEvent: "ai-core:client:openCharacters"
+};
+
 // ../../../packages/lib/src/shared/index.ts
 /** Console output prefixed with the resource name, so server logs show where a line came from. */
 function createLogger(resource) {
@@ -19,6 +69,18 @@ function createLogger(resource) {
 function registerExport(name, handler) {
 	globalThis.exports(name, handler);
 }
+/** Typed access to another resource's exports (types come from CitizenExports in @aicore-fivem/shared). */
+function resourceExport(resource) {
+	return globalThis.exports[resource];
+}
+/** Whether a resource is running now. */
+function isResourceStarted(resource) {
+	return GetResourceState(resource) === "started";
+}
+/** Another resource's exports while it runs, null when it does not (an optional dependency). */
+function optionalExport(resource) {
+	return isResourceStarted(resource) ? globalThis.exports[resource] : null;
+}
 /** Answers `exports["<resource>"].<name>` for a resource name this one `provide`s: provide makes the name exist but does not alias its exports, so each export of the stood-in resource is answered through FiveM's export event. */
 function provideExport(resource, name, fn) {
 	on(`__cfx_export_${resource}_${name}`, (setCallback) => setCallback(fn));
@@ -28,7 +90,7 @@ function provideExport(resource, name, fn) {
 const responseEvent = (resource) => `aicore:cbr:${resource}`;
 
 // ../../../packages/lib/src/server/gate.ts
-const log$3 = createLogger(GetCurrentResourceName());
+const log$4 = createLogger(GetCurrentResourceName());
 /** Every gate of this resource; one playerDropped listener frees them all (one listener per gate trips Node's limit). */
 const gates = /* @__PURE__ */ new Set();
 on("playerDropped", () => {
@@ -37,10 +99,10 @@ on("playerDropped", () => {
 });
 
 // ../../../packages/lib/src/server/callback.ts
-const log$2 = createLogger(GetCurrentResourceName());
-const resource$3 = GetCurrentResourceName();
+const log$3 = createLogger(GetCurrentResourceName());
+const resource$4 = GetCurrentResourceName();
 const pending$1 = /* @__PURE__ */ new Map();
-onNet(responseEvent(resource$3), (id, ok, result) => {
+onNet(responseEvent(resource$4), (id, ok, result) => {
 	const entry = typeof id === "number" ? pending$1.get(id) : void 0;
 	if (!entry || entry.source !== Number(globalThis.source)) return;
 	pending$1.delete(id);
@@ -48,6 +110,246 @@ onNet(responseEvent(resource$3), (id, ok, result) => {
 	if (ok === true) entry.resolve(result);
 	else entry.reject(/* @__PURE__ */ new Error("client callback failed"));
 });
+
+// ../../../packages/lib/src/server/admin/validate.ts
+/** Values of a lookup list from ai-core (items, jobs, gangs, accounts), cached for 2 s; null = not known (accepted). */
+var LookupCache = class {
+	lists = /* @__PURE__ */ new Map();
+	values(source) {
+		const cached = this.lists.get(source);
+		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
+		let list = [];
+		try {
+			list = resourceExport(CORE.resource).GetLookupValues(source);
+		} catch {}
+		const values = new Set(Array.isArray(list) ? list.filter((v) => typeof v === "string") : []);
+		this.lists.set(source, {
+			at: Date.now(),
+			values
+		});
+		return values.size > 0 ? values : null;
+	}
+};
+const lookups = new LookupCache();
+
+// ../../../packages/lib/src/server/online.ts
+/**
+* This resource's mirror of ai-core's loaded players: characters, job and gang names and duty, read once from ai-core's
+* exports on first use and then kept by its local events. Hot paths (every chat message, every alert) read it
+* instead of copying ai-core's whole player list through an export (10k players = 10k export calls per message).
+*/
+var OnlinePlayers = class {
+	players = /* @__PURE__ */ new Map();
+	onDuty = /* @__PURE__ */ new Map();
+	started = false;
+	start() {
+		if (this.started) return;
+		this.started = true;
+		const core = resourceExport(CORE.resource);
+		const load = (source, character) => {
+			this.put(source, character, (core.GetJobs(source) ?? []).map((m) => m.job), (core.GetGangs(source) ?? []).map((m) => m.gang));
+			this.setDuty(source, core.GetDutyJob(source));
+		};
+		on(CORE.playerLoadedEvent, load);
+		on(CORE.playerUnloadedEvent, (source) => this.drop(source));
+		on(CORE.jobsChangedEvent, (source, jobs) => {
+			const player = this.players.get(source);
+			if (player) player.jobs = jobs.map((m) => m.job);
+		});
+		on(CORE.gangsChangedEvent, (source, gangs) => {
+			const player = this.players.get(source);
+			if (player) player.gangs = gangs.map((m) => m.gang);
+		});
+		on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
+		for (const source of core.GetLoadedSources()) {
+			const character = core.GetCharacter(source);
+			if (character) load(source, character);
+		}
+	}
+	put(source, character, jobs, gangs) {
+		this.drop(source);
+		this.players.set(source, {
+			character,
+			jobs,
+			gangs,
+			duty: null
+		});
+	}
+	drop(source) {
+		this.setDuty(source, null);
+		this.players.delete(source);
+	}
+	setDuty(source, job) {
+		const player = this.players.get(source);
+		if (!player) return;
+		if (player.duty) this.onDuty.get(player.duty)?.delete(source);
+		player.duty = job;
+		if (!job) return;
+		let set = this.onDuty.get(job);
+		if (!set) this.onDuty.set(job, set = /* @__PURE__ */ new Set());
+		set.add(source);
+	}
+	/** Server ids of every player with a loaded character. */
+	sources() {
+		this.start();
+		return this.players.keys();
+	}
+	/** How many players have a loaded character. */
+	get size() {
+		this.start();
+		return this.players.size;
+	}
+	/** The loaded character of a player, or null. */
+	character(source) {
+		this.start();
+		return this.players.get(source)?.character ?? null;
+	}
+	/** Job names of a player (every membership, on duty or not). */
+	jobs(source) {
+		this.start();
+		return this.players.get(source)?.jobs ?? [];
+	}
+	/** Gang names of a player. */
+	gangs(source) {
+		this.start();
+		return this.players.get(source)?.gangs ?? [];
+	}
+	/** The job a player is on duty for, or null. */
+	dutyJob(source) {
+		this.start();
+		return this.players.get(source)?.duty ?? null;
+	}
+	/** Players on duty for a job (a live set: copy before awaiting). */
+	onDutyFor(job) {
+		this.start();
+		return this.onDuty.get(job) ?? EMPTY$1;
+	}
+};
+const EMPTY$1 = /* @__PURE__ */ new Set();
+const online = new OnlinePlayers();
+
+// ../../../packages/lib/src/server/proximity.ts
+/**
+* Who is near whom without scanning every player: OneSync tells the server which players are in each other's scope
+* (`playerEnteredScope` / `playerLeftScope`, ~424 m). A "near" question only measures the few players in scope
+* instead of all 10k online. Players already in scope when the resource starts are found once from a 424 m grid.
+*/
+const SCOPE_RADIUS = 424;
+const posOf = (source) => {
+	const [x = 0, y = 0, z = 0] = GetEntityCoords(GetPlayerPed(String(source)));
+	return {
+		x,
+		y,
+		z
+	};
+};
+var Scopes = class {
+	scopes = /* @__PURE__ */ new Map();
+	started = false;
+	link(a, b) {
+		let set = this.scopes.get(a);
+		if (!set) this.scopes.set(a, set = /* @__PURE__ */ new Set());
+		set.add(b);
+	}
+	start() {
+		if (this.started) return;
+		this.started = true;
+		on("playerEnteredScope", (data) => this.link(Number(data.for), Number(data.player)));
+		on("playerLeftScope", (data) => this.scopes.get(Number(data.for))?.delete(Number(data.player)));
+		on("playerDropped", () => {
+			const source = Number(globalThis.source);
+			for (const other of this.scopes.get(source) ?? []) this.scopes.get(other)?.delete(source);
+			this.scopes.delete(source);
+		});
+		this.seed();
+	}
+	/** The players in scope of each other right now: a grid of scope-sized cells, each player against 9 cells. */
+	seed() {
+		const cells = /* @__PURE__ */ new Map();
+		const all = [];
+		for (let i = 0; i < GetNumPlayerIndices(); i++) {
+			const source = Number(GetPlayerFromIndex(i));
+			const entry = {
+				source,
+				p: posOf(source)
+			};
+			all.push(entry);
+			const key = `${Math.floor(entry.p.x / SCOPE_RADIUS)}:${Math.floor(entry.p.y / SCOPE_RADIUS)}`;
+			const cell = cells.get(key);
+			if (cell) cell.push(entry);
+			else cells.set(key, [entry]);
+		}
+		for (const { source, p } of all) {
+			const cx = Math.floor(p.x / SCOPE_RADIUS);
+			const cy = Math.floor(p.y / SCOPE_RADIUS);
+			for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (const other of cells.get(`${cx + dx}:${cy + dy}`) ?? []) if (other.source !== source && Math.hypot(other.p.x - p.x, other.p.y - p.y) <= SCOPE_RADIUS) this.link(source, other.source);
+		}
+	}
+	of(source) {
+		this.start();
+		return this.scopes.get(source) ?? EMPTY;
+	}
+};
+const EMPTY = /* @__PURE__ */ new Set();
+const scopes = new Scopes();
+
+// ../../../packages/lib/src/server/command.ts
+const resource$3 = GetCurrentResourceName();
+const log$2 = createLogger(resource$3);
+/**
+* This resource's commands: announces them to ai-core (one call per tick of additions) and keeps each player's chat
+* suggestions as a delta of the commands they may use (sent when a character loads, after job or gang changes, and
+* to everyone online when commands are added; removed for everyone when the resource stops).
+*/
+var CommandSet = class {
+	list = [];
+	sent = /* @__PURE__ */ new Map();
+	announced = 0;
+	queued = false;
+	listening = false;
+	add(command) {
+		if (!this.listening) this.listen();
+		this.list.push(command);
+		if (this.queued) return;
+		this.queued = true;
+		setImmediate(() => this.flush());
+	}
+	/** Sends `source` the suggestions they gained and removes the ones they lost. */
+	refresh(source) {
+		const before = this.sent.get(source);
+		const now = /* @__PURE__ */ new Set();
+		const add = [];
+		for (const command of this.list) for (const name of command.info.names) {
+			if (!command.allowed(source, name)) continue;
+			now.add(name);
+			if (!before?.has(name)) add.push(command.suggestion(name));
+		}
+		this.sent.set(source, now);
+		if (add.length) emitNet("chat:addSuggestions", source, add);
+		if (before) {
+			for (const name of before) if (!now.has(name)) emitNet("chat:removeSuggestion", source, `/${name}`);
+		}
+	}
+	flush() {
+		this.queued = false;
+		optionalExport(CORE.resource)?.RegisterCommands(resource$3, this.list.slice(this.announced).map((c) => c.info));
+		this.announced = this.list.length;
+		for (const player of getPlayers()) this.refresh(Number(player));
+	}
+	listen() {
+		this.listening = true;
+		const refresh = (source) => this.refresh(Number(source));
+		on(CORE.playerLoadedEvent, refresh);
+		on(CORE.jobsChangedEvent, refresh);
+		on(CORE.gangsChangedEvent, refresh);
+		on("playerDropped", () => this.sent.delete(Number(globalThis.source)));
+		on("onResourceStop", (name) => {
+			if (name !== resource$3) return;
+			for (const command of this.list) for (const n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
+		});
+	}
+};
+const commands = new CommandSet();
 
 // ../../../packages/lib/src/server/netEvent.ts
 const log$1 = createLogger(GetCurrentResourceName());
