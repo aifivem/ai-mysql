@@ -1,11 +1,11 @@
-import { provideExport, registerExport } from "@aicore-fivem/lib/server"
-import { mysql } from "@aicore-fivem/mysql"
+import { provideExport, registerExport } from "@aicore-fivem/lib/server";
+import { mysql } from "@aicore-fivem/mysql";
 import {
   GHMATTIMYSQL_ALIASES,
   MYSQL_ASYNC_ALIASES,
   OXMYSQL_EXPORTS,
   promiseForm,
-} from "@aicore-fivem/mysql/compat"
+} from "@aicore-fivem/mysql/compat";
 
 /**
  * Stands in for oxmysql (the manifest `provide`s oxmysql, mysql-async and ghmattimysql): third-party scripts call
@@ -14,31 +14,31 @@ import {
  */
 
 // Shared by every third-party script, so larger than an ai-* resource's own pool.
-mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10))
+mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
 
 for (const [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
-  const promised = promiseForm(name)
+  const promised = promiseForm(name);
   for (const [exportName, handler] of [
     [name, fn],
     [`${name}_async`, promised],
     [`${name}Sync`, promised],
   ] as const) {
-    registerExport(exportName, handler as (...args: unknown[]) => unknown)
-    provideExport("oxmysql", exportName, handler)
+    registerExport(exportName, handler as (...args: unknown[]) => unknown);
+    provideExport("oxmysql", exportName, handler);
   }
 
-  const ghmatti = GHMATTIMYSQL_ALIASES[name]
+  const ghmatti = GHMATTIMYSQL_ALIASES[name];
   if (ghmatti) {
-    provideExport("ghmattimysql", ghmatti, fn)
-    provideExport("ghmattimysql", `${ghmatti}Sync`, promised)
+    provideExport("ghmattimysql", ghmatti, fn);
+    provideExport("ghmattimysql", `${ghmatti}Sync`, promised);
   }
-  const mysqlAsync = MYSQL_ASYNC_ALIASES[name]
-  if (mysqlAsync) provideExport("mysql-async", mysqlAsync, fn)
+  const mysqlAsync = MYSQL_ASYNC_ALIASES[name];
+  if (mysqlAsync) provideExport("mysql-async", mysqlAsync, fn);
 }
 
 // Open the pool at start so the connection result shows up in the console right away.
-mysql.awaitConnection().catch(() => undefined)
+mysql.awaitConnection().catch(() => undefined);
 
 on("onResourceStop", (resource: string) => {
-  if (resource === GetCurrentResourceName()) void mysql.close()
-})
+  if (resource === GetCurrentResourceName()) void mysql.close();
+});
