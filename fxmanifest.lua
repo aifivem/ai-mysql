@@ -1,5 +1,5 @@
 name 'ai-mysql'
-author 'ai-core'
+author 'TGIANN'
 version '2.14.3'
 license 'GPL-3.0-only'
 description 'Database engine and oxmysql stand-in: provides oxmysql, mysql-async and ghmattimysql'

@@ -73,7 +73,7 @@ onNet(responseEvent(resource$4), (id, ok, result) => {
 	entry && entry.source === Number(globalThis.source) && (pending$1.delete(id), clearTimeout(entry.timer), ok === !0 ? entry.resolve(result) : entry.reject(Error("client callback failed")));
 });
 // ../../../packages/lib/src/server/admin/validate.ts
-const core$7 = resourceExport(CORE.resource);
+const core$8 = resourceExport(CORE.resource);
 new class {
 	lists = new Map();
 	values(source) {
@@ -81,7 +81,7 @@ new class {
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$7.GetLookupValues(source);
+			list = core$8.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -91,7 +91,7 @@ new class {
 	}
 }(), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/online.ts
-const core$4 = resourceExport(CORE.resource);
+const core$5 = resourceExport(CORE.resource);
 var OnlinePlayers = class {
 	players = new Map();
 	onDuty = new Map();
@@ -100,7 +100,7 @@ var OnlinePlayers = class {
 		if (this.started) return;
 		this.started = !0;
 		let load = (source, character) => {
-			this.put(source, character, (core$4.GetJobs(source) ?? []).map((m) => m.job), (core$4.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$4.GetDutyJob(source));
+			this.put(source, character, (core$5.GetJobs(source) ?? []).map((m) => m.job), (core$5.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$5.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => {
 			let player = this.players.get(source);
@@ -109,8 +109,8 @@ var OnlinePlayers = class {
 			let player = this.players.get(source);
 			player && (player.gangs = gangs.map((m) => m.gang));
 		}), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$4.GetLoadedSources()) {
-			let character = core$4.GetCharacter(source);
+		for (let source of core$5.GetLoadedSources()) {
+			let character = core$5.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -14426,7 +14426,7 @@ const mysql = {
 	setPoolSize,
 	close: closePool
 };
-createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource);
+createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/mysql/src/compat.ts
 function split(params, cb) {
 	return typeof cb == "function" ? [params, cb] : typeof params == "function" ? [void 0, params] : [params, void 0];
