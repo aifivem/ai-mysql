@@ -8,6 +8,7 @@
   "author": {
     "name": "ai-core"
   },
+  "repository": "github:TGIANN/ai-mysql",
   "type": "module",
   "fxDependencies": [
     "/server:12913"

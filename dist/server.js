@@ -2,6 +2,15 @@ exports = globalThis.exports;
 // \0rolldown/runtime.js
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod, mod.exports), cb = null), mod.exports);
 let node_perf_hooks = require("node:perf_hooks");
+// ../../../packages/lib/src/shared/index.ts
+function createLogger(resource) {
+	let prefix = `[${resource}]`;
+	return {
+		info: (message, ...details) => console.log(`${prefix} ${message}`, ...details),
+		warn: (message, ...details) => console.warn(`${prefix} ^3${message}^7`, ...details),
+		error: (message, ...details) => console.error(`${prefix} ^1${message}^7`, ...details)
+	};
+}
 // ../../../packages/shared/src/core.ts
 const CORE = {
 	resource: "ai-core",
@@ -33,15 +42,6 @@ const CORE = {
 	spawnEvent: "ai-core:client:spawn",
 	openCharactersEvent: "ai-core:client:openCharacters"
 };
-// ../../../packages/lib/src/shared/index.ts
-function createLogger(resource) {
-	let prefix = `[${resource}]`;
-	return {
-		info: (message, ...details) => console.log(`${prefix} ${message}`, ...details),
-		warn: (message, ...details) => console.warn(`${prefix} ^3${message}^7`, ...details),
-		error: (message, ...details) => console.error(`${prefix} ^1${message}^7`, ...details)
-	};
-}
 // ../../../packages/lib/src/fivem/exports.ts
 function registerExport(name, handler) {
 	globalThis.exports(name, handler);
