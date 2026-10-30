@@ -29,7 +29,7 @@ const CORE = {
 	clientPlayerLoadedEvent: "ai-core:client:playerLoaded",
 	clientPlayerUnloadedEvent: "ai-core:client:playerUnloaded",
 	clientCharacterPortraitEvent: "ai-core:client:characterPortrait",
-	clientCharacterLookEvent: "ai-core:client:characterLook",
+	characterLooksEvent: "ai-core:client:characterLooks",
 	clientPromptPressedEvent: "ai-core:client:promptPressed",
 	clientCacheEvent: "ai-core:client:cache",
 	clientHudVisibleEvent: "ai-core:client:hudVisible",
@@ -74,7 +74,7 @@ onNet(responseEvent(resource$4), (id, ok, result) => {
 	entry && entry.source === Number(globalThis.source) && (pending$1.delete(id), clearTimeout(entry.timer), ok === !0 ? entry.resolve(result) : entry.reject(Error("client callback failed")));
 });
 // ../../../packages/lib/src/server/admin/validate.ts
-const core$13 = resourceExport(CORE.resource);
+const core$14 = resourceExport(CORE.resource);
 new class {
 	lists = new Map();
 	values(source) {
@@ -82,7 +82,7 @@ new class {
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$13.GetLookupValues(source);
+			list = core$14.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -92,7 +92,7 @@ new class {
 	}
 }(), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/online.ts
-const core$10 = resourceExport(CORE.resource);
+const core$11 = resourceExport(CORE.resource);
 var OnlinePlayers = class {
 	players = new Map();
 	onDuty = new Map();
@@ -101,7 +101,7 @@ var OnlinePlayers = class {
 		if (this.started) return;
 		this.started = !0;
 		let load = (source, character) => {
-			this.put(source, character, (core$10.GetJobs(source) ?? []).map((m) => m.job), (core$10.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$10.GetDutyJob(source));
+			this.put(source, character, (core$11.GetJobs(source) ?? []).map((m) => m.job), (core$11.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$11.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => {
 			let player = this.players.get(source);
@@ -110,8 +110,8 @@ var OnlinePlayers = class {
 			let player = this.players.get(source);
 			player && (player.gangs = gangs.map((m) => m.gang));
 		}), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$10.GetLoadedSources()) {
-			let character = core$10.GetCharacter(source);
+		for (let source of core$11.GetLoadedSources()) {
+			let character = core$11.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -14427,7 +14427,7 @@ const mysql = {
 	setPoolSize,
 	close: closePool
 };
-createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/mysql/src/compat.ts
 function split(params, cb) {
 	return typeof cb == "function" ? [params, cb] : typeof params == "function" ? [void 0, params] : [params, void 0];
@@ -14499,9 +14499,9 @@ const GHMATTIMYSQL_ALIASES = {
 	scalar: "mysql_fetch_scalar",
 	transaction: "mysql_transaction",
 	store: "mysql_store"
-};
+}, ResourceName = GetCurrentResourceName();
 // resource/server/index.ts
-mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
+IsDuplicityVersion(), mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
 for (let [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 	let promised = promiseForm(name);
 	for (let [exportName, handler] of [
@@ -14515,5 +14515,5 @@ for (let [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 	mysqlAsync && provideExport("mysql-async", mysqlAsync, fn);
 }
 mysql.awaitConnection().catch(() => void 0), on("onResourceStop", (resource) => {
-	resource === GetCurrentResourceName() && mysql.close();
+	resource === ResourceName && mysql.close();
 });

@@ -6,6 +6,7 @@ import {
   OXMYSQL_EXPORTS,
   promiseForm,
 } from "@aicore-fivem/mysql/compat";
+import { ResourceName } from "common/resource";
 
 /**
  * Stands in for oxmysql (the manifest `provide`s oxmysql, mysql-async and ghmattimysql): third-party scripts call
@@ -40,5 +41,5 @@ for (const [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 mysql.awaitConnection().catch(() => undefined);
 
 on("onResourceStop", (resource: string) => {
-  if (resource === GetCurrentResourceName()) void mysql.close();
+  if (resource === ResourceName) void mysql.close();
 });
