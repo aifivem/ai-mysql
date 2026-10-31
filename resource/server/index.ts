@@ -1,4 +1,8 @@
-import { provideExport, registerExport } from "@aicore-fivem/lib/server";
+import {
+  onStop,
+  provideExport,
+  registerExport,
+} from "@aicore-fivem/lib/server";
 import { mysql } from "@aicore-fivem/mysql";
 import {
   GHMATTIMYSQL_ALIASES,
@@ -6,7 +10,6 @@ import {
   OXMYSQL_EXPORTS,
   promiseForm,
 } from "@aicore-fivem/mysql/compat";
-import { ResourceName } from "common/resource";
 
 /**
  * Stands in for oxmysql (the manifest `provide`s oxmysql, mysql-async and ghmattimysql): third-party scripts call
@@ -40,6 +43,4 @@ for (const [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 // Open the pool at start so the connection result shows up in the console right away.
 mysql.awaitConnection().catch(() => undefined);
 
-on("onResourceStop", (resource: string) => {
-  if (resource === ResourceName) void mysql.close();
-});
+onStop(() => void mysql.close());

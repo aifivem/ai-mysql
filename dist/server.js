@@ -41,6 +41,8 @@ const CORE = {
 	vehicleTypeCallback: "ai-core:vehicleType",
 	interactionStateKey: "ai:interaction",
 	pvpStateKey: "ai:pvp",
+	medicalStateKey: "ai:medical",
+	clientDeadEvent: "ai-core:client:dead",
 	charactersCallback: "ai-core:characters",
 	createCharacterCallback: "ai-core:createCharacter",
 	deleteCharacterCallback: "ai-core:deleteCharacter",
@@ -171,6 +173,9 @@ var OnlinePlayers = class {
 	character(source) {
 		return this.start(), this.players.get(source)?.character ?? null;
 	}
+	charId(source) {
+		return this.start(), this.players.get(source)?.character.id;
+	}
 	name(source, options = {}) {
 		let c = this.character(source);
 		return c ? `${c.firstname} ${c.lastname}` : options.fallback === !1 ? "" : GetPlayerName(String(source));
@@ -227,9 +232,9 @@ var OnlinePlayers = class {
 const EMPTY = new Set();
 new OnlinePlayers(), resourceExport(CORE.resource), resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
 const dropped = new Set();
-let listening = !1;
+let listening$1 = !1;
 function onDropped(fn) {
-	listening || (listening = !0, on("playerDropped", () => {
+	listening$1 || (listening$1 = !0, on("playerDropped", () => {
 		let source = Number(globalThis.source);
 		for (let handler of dropped) handler(source);
 	})), dropped.add(fn);
@@ -14540,6 +14545,23 @@ const mysql = {
 	close: closePool
 };
 createLogger("aicore-lib");
+// ../../../packages/lib/src/fivem/byResource.ts
+const stopHandlers = [];
+let listening = !1;
+function onAnyStop(handler) {
+	if (stopHandlers.push(handler), listening) return;
+	listening = !0;
+	let event = IsDuplicityVersion() ? "onResourceStop" : "onClientResourceStop";
+	on(event, (resource) => {
+		for (let stop of stopHandlers) stop(resource);
+	});
+}
+function onStop(fn) {
+	let self = GetCurrentResourceName();
+	onAnyStop((resource) => {
+		resource === self && fn();
+	});
+}
 // ../../../packages/lib/src/fivem/scheduler.ts
 var Group = class {
 	interval;
@@ -14698,9 +14720,9 @@ const GHMATTIMYSQL_ALIASES = {
 	scalar: "mysql_fetch_scalar",
 	transaction: "mysql_transaction",
 	store: "mysql_store"
-}, ResourceName = GetCurrentResourceName();
+};
 // resource/server/index.ts
-IsDuplicityVersion(), mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
+mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
 for (let [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 	let promised = promiseForm(name);
 	for (let [exportName, handler] of [
@@ -14713,6 +14735,4 @@ for (let [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 	let mysqlAsync = MYSQL_ASYNC_ALIASES[name];
 	mysqlAsync && provideExport("mysql-async", mysqlAsync, fn);
 }
-mysql.awaitConnection().catch(() => void 0), on("onResourceStop", (resource) => {
-	resource === ResourceName && mysql.close();
-});
+mysql.awaitConnection().catch(() => void 0), onStop(() => void mysql.close());
