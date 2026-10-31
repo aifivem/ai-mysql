@@ -8,7 +8,7 @@
   "author": {
     "name": "TGIANN"
   },
-  "repository": "github:TGIANN/ai-mysql",
+  "repository": "github:aifivem/ai-mysql",
   "type": "module",
   "fxDependencies": [
     "/server:12913"
