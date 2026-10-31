@@ -1,6 +1,6 @@
 {
   "name": "ai-mysql",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "fxVersion": "2.14.3",
   "private": true,
   "description": "Database engine and oxmysql stand-in: provides oxmysql, mysql-async and ghmattimysql",
