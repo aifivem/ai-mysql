@@ -91,13 +91,13 @@ on("playerDropped", () => {
 	let source = Number(globalThis.source);
 	for (let gate of gates) gate.release(source);
 }), createLogger(GetCurrentResourceName());
-const resource$4 = GetCurrentResourceName(), pending$1 = new Map();
-onNet(responseEvent(resource$4), (id, ok, result) => {
+const resource$5 = GetCurrentResourceName(), pending$1 = new Map();
+onNet(responseEvent(resource$5), (id, ok, result) => {
 	let entry = typeof id == "number" ? pending$1.get(id) : void 0;
 	entry && entry.source === Number(globalThis.source) && (pending$1.delete(id), clearTimeout(entry.timer), ok === !0 ? entry.resolve(result) : entry.reject(Error("client callback failed")));
 });
 // ../../../packages/lib/src/server/admin/validate.ts
-const core$25 = resourceExport(CORE.resource);
+const core$26 = resourceExport(CORE.resource);
 new class {
 	lists = new Map();
 	values(source) {
@@ -105,7 +105,7 @@ new class {
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$25.GetLookupValues(source);
+			list = core$26.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -113,8 +113,8 @@ new class {
 			values
 		}), values.size > 0 ? values : null;
 	}
-}(), resourceExport(CORE.resource), resourceExport(CORE.resource);
-// ../../../packages/lib/src/server/online.ts
+}(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+// ../../../packages/lib/src/server/online/mirror.ts
 const core$22 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
@@ -126,7 +126,7 @@ function reindex(index, source, before, after) {
 		set || index.set(name, set = new Set()), set.add(source);
 	}
 }
-var OnlinePlayers = class {
+var OnlineMirror = class {
 	players = new Map();
 	onDuty = new Map();
 	jobIndex = new Map();
@@ -178,6 +178,7 @@ var OnlinePlayers = class {
 		let set = this.onDuty.get(job);
 		set || this.onDuty.set(job, set = new Set()), set.add(source);
 	}
+}, OnlinePlayers = class extends OnlineMirror {
 	sources() {
 		return this.start(), this.players.keys();
 	}
@@ -297,10 +298,10 @@ new class {
 		let def = this.gangs.get(name);
 		return def === void 0 && this.gangs.set(name, def = core$18.GetGangDefinition(name) ?? null), def;
 	}
-}();
-// ../../../packages/lib/src/server/command.ts
+}(), createLogger(GetCurrentResourceName());
+// ../../../packages/lib/src/server/command/commandSet.ts
 const resource$3 = GetCurrentResourceName();
-createLogger(resource$3), new class {
+new class {
 	list = [];
 	sent = new Map();
 	announced = 0;
@@ -14588,7 +14589,7 @@ function onStop(fn) {
 		resource === self && fn();
 	});
 }
-// ../../../packages/lib/src/fivem/scheduler.ts
+// ../../../packages/lib/src/fivem/scheduler/group.ts
 var Group = class {
 	interval;
 	jobs = Array(8);
@@ -14674,7 +14675,7 @@ new class {
 		}
 		groups.length = kept, this.nextDue = soonest;
 	};
-}(), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+}(), IsDuplicityVersion(), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/mysql/src/compat.ts
 function split(params, cb) {
 	return typeof cb == "function" ? [params, cb] : typeof params == "function" ? [void 0, params] : [params, void 0];
@@ -14747,7 +14748,7 @@ const GHMATTIMYSQL_ALIASES = {
 	transaction: "mysql_transaction",
 	store: "mysql_store"
 };
-// resource/server/index.ts
+// resource/server/oxmysql.ts
 mysql.setPoolSize(GetConvarInt("ai_mysql_shared_pool_size", 10));
 for (let [name, fn] of Object.entries(OXMYSQL_EXPORTS)) {
 	let promised = promiseForm(name);

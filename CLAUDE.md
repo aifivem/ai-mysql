@@ -23,5 +23,5 @@ The database engine for third-party scripts: it stands in for oxmysql (`provide 
 
 ## Entry points
 
-- Export registration: `resource/server/index.ts`. Engine and the oxmysql-compatible functions: `packages/mysql/src` (`engine.ts`, `compat.ts`).
+- Export registration and the shared pool: `resource/server/oxmysql.ts`. Engine and the oxmysql-compatible functions: `packages/mysql/src` (`engine.ts`, `compat.ts`).
 - Lua wrapper for scripts: `lib/MySQL.lua`.
