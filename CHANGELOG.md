@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/aifivem/ai-mysql/compare/v0.1.4...v0.1.5) (2026-11-02)
+
+
+### Documentation
+
+* install from the release zip ([38063db](https://github.com/aifivem/ai-mysql/commit/38063dbe0143736cfccc5608dbeeebb358f307ed))
+
+
+### Miscellaneous Chores
+
+* build files are no longer in git, the release zip carries them ([f1c15b1](https://github.com/aifivem/ai-mysql/commit/f1c15b1f91de87e03c9609fdf930ee8fa8d61c3f))
+
 ## [0.1.4](https://github.com/aifivem/ai-mysql/compare/v0.1.3...v0.1.4) (2026-11-02)
 
 
