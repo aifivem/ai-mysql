@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/aifivem/ai-mysql/compare/v0.1.3...v0.1.4) (2026-11-02)
+
+
+### Code Refactoring
+
+* import the shared packages from [@aifivem](https://github.com/aifivem) ([6c6686c](https://github.com/aifivem/ai-mysql/commit/6c6686c3edd2de713c3c850ec2d4977370acc811))
+
 ## [0.1.3](https://github.com/aifivem/ai-mysql/compare/v0.1.2...v0.1.3) (2026-11-01)
 
 
