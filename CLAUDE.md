@@ -1,11 +1,11 @@
 # ai-mysql
 
-The database engine for third-party scripts: it stands in for oxmysql (`provide 'oxmysql'`, also `mysql-async` and `ghmattimysql`), so scripts that call `exports.oxmysql:*` or load `@oxmysql/lib/MySQL.lua` run unchanged on its pool. Server only. The engine itself is the `@aicore-fivem/mysql` package; ai-* resources use that package in-process and never go through this resource.
+The database engine for third-party scripts: it stands in for oxmysql (`provide 'oxmysql'`, also `mysql-async` and `ghmattimysql`), so scripts that call `exports.oxmysql:*` or load `@oxmysql/lib/MySQL.lua` run unchanged on its pool. Server only. The engine itself is the `@aifivem/mysql` package; ai-* resources use that package in-process and never go through this resource.
 
 ## Decisions
 
 - Own engine instead of oxmysql (owner decision): ai-* resources skip the export hop per query, third-party scripts keep working through this stand-in. oxmysql is not installed on the server.
-- The export surface, callback rules, result types and `lib/MySQL.lua` follow oxmysql exactly (adapted from oxmysql, LGPL-3.0, Overextended; license in `lib/LICENSE-oxmysql`). oxmysql's mysql2/named-placeholders patches are reproduced in code (`@aicore-fivem/mysql`), not by patching packages.
+- The export surface, callback rules, result types and `lib/MySQL.lua` follow oxmysql exactly (adapted from oxmysql, LGPL-3.0, Overextended; license in `lib/LICENSE-oxmysql`). oxmysql's mysql2/named-placeholders patches are reproduced in code (`@aifivem/mysql`), not by patching packages.
 - Pool size: `ai_mysql_shared_pool_size` convar (default 10); each ai-* resource's own pool uses `ai_mysql_pool_size` (default 5).
 - The manifest `version` is the oxmysql version whose behaviour this resource mirrors (`fxVersion` in package.json, now 2.14.3), not the package version: scripts read `GetResourceMetadata("oxmysql", "version")` (resolved to this resource through `provide`) and switch to old oxmysql 1.x code paths below 2.0. Raise it together with the engine when following a newer oxmysql.
 

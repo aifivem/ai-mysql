@@ -2,19 +2,19 @@ import {
   onStop,
   provideExport,
   registerExport,
-} from "@aicore-fivem/lib/server";
-import { mysql } from "@aicore-fivem/mysql";
+} from "@aifivem/lib/server";
+import { mysql } from "@aifivem/mysql";
 import {
   GHMATTIMYSQL_ALIASES,
   MYSQL_ASYNC_ALIASES,
   OXMYSQL_EXPORTS,
   promiseForm,
-} from "@aicore-fivem/mysql/compat";
+} from "@aifivem/mysql/compat";
 
 /**
  * Stands in for oxmysql (the manifest `provide`s oxmysql, mysql-async and ghmattimysql): third-party scripts call
  * `exports.oxmysql:*` or load `@oxmysql/lib/MySQL.lua` and reach this resource's pool. ai-* resources do not go
- * through here; each runs `@aicore-fivem/mysql` in-process.
+ * through here; each runs `@aifivem/mysql` in-process.
  */
 
 // Shared by every third-party script, so larger than an ai-* resource's own pool.
