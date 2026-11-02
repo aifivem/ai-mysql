@@ -50,13 +50,7 @@
   ],
   "packages": {
     ".": {
-      "package-name": "ai-mysql",
-      "extra-files": [
-        {
-          "type": "generic",
-          "path": "fxmanifest.lua"
-        }
-      ]
+      "package-name": "ai-mysql"
     }
   }
 }
